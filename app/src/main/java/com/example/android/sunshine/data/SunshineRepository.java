@@ -23,6 +23,7 @@ import com.example.android.sunshine.AppExecutors;
 import com.example.android.sunshine.data.database.WeatherDao;
 import com.example.android.sunshine.data.database.WeatherEntry;
 import com.example.android.sunshine.data.network.WeatherNetworkDataSource;
+import com.example.android.sunshine.utilities.SunshineDateUtils;
 
 import java.util.Date;
 
@@ -54,6 +55,10 @@ public class SunshineRepository {
 
         networkData.observeForever(newForecastsFromNetwork -> {
             mExecutors.diskIO().execute(() -> {
+                // Deletes old historical data
+                deleteOldData();
+                Log.d(LOG_TAG, "Old weather deleted");
+
                 // Insert our new weather data into Sunshine's database
                 mWeatherDao.bulkInsert(newForecastsFromNetwork);
                 Log.d(LOG_TAG, "New values inserted");
@@ -90,7 +95,12 @@ public class SunshineRepository {
         mInitialized = true;
 
         // TODO Finish this method when instructed
-        startFetchWeatherService();
+        //startFetchWeatherService();
+        mExecutors.diskIO().execute(() -> {
+            if (isFetchNeeded()) {
+                startFetchWeatherService();
+            }
+        });
     }
 
     /**
@@ -105,6 +115,9 @@ public class SunshineRepository {
      */
     private void deleteOldData() {
         // TODO Finish this method when instructed
+        Date today = SunshineDateUtils.getNormalizedUtcDateForToday();
+        Log.d(LOG_TAG, "Peforming Deleting Old Data ");
+        mWeatherDao.deleteOldWeather(today);
     }
 
     /**
@@ -114,7 +127,11 @@ public class SunshineRepository {
      */
     private boolean isFetchNeeded() {
         // TODO Finish this method when instructed
-        return true;
+        //return true;
+        Date today = SunshineDateUtils.getNormalizedUtcDateForToday();
+        int count = mWeatherDao.countAllFutureWeather(today);
+        Log.d(LOG_TAG, "Number of All Future Weather Records: " + count);
+        return (count < WeatherNetworkDataSource.NUM_DAYS);
     }
 
     /**
@@ -123,7 +140,7 @@ public class SunshineRepository {
 
     private void startFetchWeatherService() {
         // TODO Finish this method when instructed
-        mWeatherNetworkDataSource.startFetchWeatherService();
+            mWeatherNetworkDataSource.startFetchWeatherService();
     }
 
 }
