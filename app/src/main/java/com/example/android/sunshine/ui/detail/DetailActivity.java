@@ -55,15 +55,20 @@ public class DetailActivity extends AppCompatActivity {
 
         mDetailBinding = DataBindingUtil.setContentView(this, R.layout.activity_detail);
         long timestamp = getIntent().getLongExtra(WEATHER_ID_EXTRA, -1);
-        Date date = new Date(timestamp);
+        //Date date = new Date(timestamp);
+        Date date = SunshineDateUtils.getNormalizedUtcDateForToday();
 
-        mViewModel = ViewModelProviders.of(this).get(DetailActivityViewModel.class);
+        //mViewModel = ViewModelProviders.of(this).get(DetailActivityViewModel.class);
+        // Get the ViewModel from the factory
+        DetailViewModelFactory factory = InjectorUtils.provideDetailViewModelFactory(this.getApplicationContext(), date);
+        mViewModel = ViewModelProviders.of(this, factory).get(DetailActivityViewModel.class);
 
         mViewModel.getWeather().observe(this, weatherEntry -> {
             // Update the UI
             if (weatherEntry != null) bindWeatherToUI(weatherEntry);
         });
 
+        /*
         AppExecutors.getInstance().diskIO().execute(()-> {
             try {
 
@@ -81,9 +86,10 @@ public class DetailActivity extends AppCompatActivity {
                 e.printStackTrace();
             }
         });
+        */
 
         // THIS IS JUST TO RUN THE CODE; REPOSITORY SHOULD NEVER BE CREATED IN DETAILACTIVITY
-        InjectorUtils.provideRepository(this).initializeData();
+        //InjectorUtils.provideRepository(this).initializeData();
 
     }
 
